@@ -27,41 +27,37 @@ def calculate_talking_frames(y, sr, fps, threshold=8):
 
     return talking, num_frames
 
-def load_mouth_images():
+def load_avatar_images():
     """Load the mouth images for different mouth positions."""
-    mouth_images = {
+    avatar_images = {
         "closed": cv2.imread("avatar_mouth_closed.png"),
-        "semi-open": cv2.imread("avatar_mouth_semi_open.png"),
-        "open": cv2.imread("avatar_mouth_open.png")
+        "semi_open": cv2.imread("avatar_mouth_semi_open.png"),
+        "open": cv2.imread("avatar_mouth_open.png"),
+        "neutral": cv2.imread("avatar_neutral.png"),
     }
-    return mouth_images
+    return avatar_images
 
-def generate_frames(talking, num_frames, mouth_images, mouth_y_offset=310, mouth_x_offset=300):
-    """Generate avatar frames based on talking frames and mouth images."""
+def generate_frames(talking, num_frames, avatar_images, mouth_y_offset=310, mouth_x_offset=300):
+    """Generate avatar frames based on talking frames and selected avatar images."""
     frames = []
     
     for i in range(num_frames):
         if talking[i]:
             if i == 0 or not talking[i-1]:
-                mouth_image = mouth_images["closed"]
+                avatar = avatar_images["closed"]
             elif i > 1 and talking[i-1] and talking[i-2]:
                 previous_frame_open = (
-                    frames[-1][mouth_y_offset:mouth_y_offset+mouth_images["open"].shape[0], 
-                               mouth_x_offset:mouth_x_offset+mouth_images["open"].shape[1]] == mouth_images["open"]).all()
+                    frames[-1] == avatar_images["open"]).all()
                 previous_frame_open_2 = (
-                    frames[-2][mouth_y_offset:mouth_y_offset+mouth_images["open"].shape[0], 
-                               mouth_x_offset:mouth_x_offset+mouth_images["open"].shape[1]] == mouth_images["open"]).all()
+                    frames[-2] == avatar_images["open"]).all()
                 if previous_frame_open and previous_frame_open_2:
-                    mouth_image = mouth_images["semi-open"]
+                    avatar = avatar_images["semi_open"]
                 else:
-                    mouth_image = mouth_images["open"]
+                    avatar = avatar_images["open"]
             else:
-                mouth_image = mouth_images["semi-open"]
-            
-            avatar = cv2.imread("avatar_face.png")
-            avatar[mouth_y_offset:mouth_y_offset+mouth_image.shape[0], mouth_x_offset:mouth_x_offset+mouth_image.shape[1]] = mouth_image
+                avatar = avatar_images["semi_open"]
         else:
-            avatar = cv2.imread("avatar_face.png")
+            avatar = avatar_images["neutral"]
 
         frames.append(avatar)
     
@@ -79,6 +75,9 @@ def create_talking_avatar_video(audio_path, output_path="output_video.mp4", fps=
     """Main function to generate the talking avatar video from an audio file."""
     y, sr = load_audio(audio_path)
     talking, num_frames = calculate_talking_frames(y, sr, fps, threshold)
-    mouth_images = load_mouth_images()
+    mouth_images = load_avatar_images()
     frames = generate_frames(talking, num_frames, mouth_images)
     create_video(frames, fps, audio_path, output_path)
+
+
+create_talking_avatar_video("mosconi1.mp3", "output_video.mp4", fps=15, threshold=2)
